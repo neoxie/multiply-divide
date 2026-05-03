@@ -3,6 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* 竖式颜色体系 */
+  --color-green-bg: #A5D6A7;
+  --color-green-text: #1B5E20;
+  --color-blue-bg: #90CAF9;
+  --color-blue-text: #0D47A1;
+  --color-orange-bg: #FFCC80;
+  --color-orange-text: #E65100;
+  --color-red-bg: #EF9A9A;
+  --color-red-text: #B71C1C;
+  --color-symbol: #C62828;
+  --color-line: #555555;
 }
 
 @theme inline {
