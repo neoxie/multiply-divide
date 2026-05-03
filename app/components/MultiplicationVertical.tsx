@@ -82,11 +82,11 @@ function DigitCell({ char, bgColor, textColor, isLarger }: CellProps) {
   );
 }
 
-function SymbolCell({ char, color }: { char: string; color?: string }) {
+function SymbolCell({ char, color, width }: { char: string; color?: string; width?: number }) {
   return (
     <div
       style={{
-        width: SYMBOL_COL_WIDTH,
+        width: width || SYMBOL_COL_WIDTH,
         height: 40,
         display: "flex",
         alignItems: "center",
@@ -278,7 +278,7 @@ export default function MultiplicationVertical({
       ) {
         cells.push(
           <div key={`d${colIdx}`} style={{ display: "flex" }}>
-            <SymbolCell char={symbol} color={symbolColor} />
+            <SymbolCell char={symbol} color={symbolColor} width={DIGIT_COL_WIDTH} />
           </div>
         );
       } else if (digit !== " ") {

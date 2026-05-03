@@ -124,7 +124,7 @@ export default function DivisionVertical({
 
   // Bracket area padding
   const bracketPaddingLeft = 8;
-  const bracketPaddingTop = 6;
+  const BRACKET_LINE_HEIGHT = 6;
 
   // Grid column numbers: col 1 = symbol, col 2..(1+totalDigitCols) = digits
   // Dividend digit at index i maps to grid column 2+i
@@ -136,22 +136,59 @@ export default function DivisionVertical({
     span?: number;
     content: React.ReactNode;
     isLine?: boolean;
+    isBracketLine?: boolean;
   };
 
   const items: GridItem[] = [];
 
-  // Row 1: Dividend digits in columns 2..(1+totalDigitCols)
+  // Row 1: Quotient digits, right-aligned with dividend
+  const quotientStartCol = 2 + totalDigitCols - quotientDigits.length;
+  quotientDigits.forEach((d, i) => {
+    items.push({
+      col: quotientStartCol + i,
+      row: 1,
+      content: (
+        <DigitCell digit={d} bgColor={RED_BG} textColor={RED_TEXT} />
+      ),
+    });
+  });
+
+  // Row 2: Bracket line spanning all digit columns
+  const bracketLineSpan = 1 + totalDigitCols;
+  let bracketLineWidth = 0;
+  for (let c = 1; c <= 1 + totalDigitCols; c++) {
+    bracketLineWidth += c === 1 ? SYMBOL_COL_WIDTH : CELL_SIZE;
+    if (c > 1) bracketLineWidth += CELL_GAP;
+  }
+  items.push({
+    col: 1,
+    row: 2,
+    span: bracketLineSpan,
+    isLine: true,
+    isBracketLine: true,
+    content: (
+      <div
+        style={{
+          width: bracketLineWidth,
+          height: 2,
+          backgroundColor: LINE_COLOR,
+        }}
+      />
+    ),
+  });
+
+  // Row 3: Dividend digits in columns 2..(1+totalDigitCols)
   dividendDigits.forEach((d, i) => {
     items.push({
       col: 2 + i,
-      row: 1,
+      row: 3,
       content: (
         <DigitCell digit={d} bgColor={GREEN_BG} textColor={GREEN_TEXT} />
       ),
     });
   });
 
-  let currentGridRow = 2;
+  let currentGridRow = 4;
 
   for (let si = 0; si < steps.length; si++) {
     const step = steps[si];
@@ -297,11 +334,6 @@ export default function DivisionVertical({
     currentGridRow++;
   }
 
-  // Quotient positioning: right-aligned with the dividend, above the bracket line
-  const quotientOffsetLeft =
-    bracketPaddingLeft +
-    (totalDigitCols - quotientDigits.length) * (CELL_SIZE + CELL_GAP);
-
   return (
     <div
       style={{
@@ -311,7 +343,7 @@ export default function DivisionVertical({
         padding: 20,
       }}
     >
-      {/* Divisor */}
+      {/* Divisor - aligned with dividend row (row 3) */}
       <div
         style={{
           display: "flex",
@@ -319,6 +351,7 @@ export default function DivisionVertical({
           alignItems: "center",
           height: CELL_SIZE,
           paddingRight: 4,
+          marginTop: CELL_SIZE + CELL_GAP + BRACKET_LINE_HEIGHT + CELL_GAP,
         }}
       >
         {divisorDigits.map((d, i) => (
@@ -331,35 +364,14 @@ export default function DivisionVertical({
         ))}
       </div>
 
-      {/* Bracket area with L-shaped border */}
+      {/* Bracket area - borderLeft spans quotient + grid */}
       <div
         style={{
           borderLeft: `2px solid ${LINE_COLOR}`,
-          borderTop: `2px solid ${LINE_COLOR}`,
           paddingLeft: bracketPaddingLeft,
-          paddingTop: bracketPaddingTop,
         }}
       >
-        {/* Quotient row - positioned above the dividend, right-aligned */}
-        <div
-          style={{
-            display: "flex",
-            gap: CELL_GAP,
-            marginBottom: 2,
-            marginLeft: quotientOffsetLeft,
-          }}
-        >
-          {quotientDigits.map((d, i) => (
-            <DigitCell
-              key={i}
-              digit={d}
-              bgColor={RED_BG}
-              textColor={RED_TEXT}
-            />
-          ))}
-        </div>
-
-        {/* Computation grid */}
+        {/* Grid: row 0 = quotient, row 1 = bracket line, row 2 = dividend, ... */}
         <div
           style={{
             display: "grid",
@@ -379,7 +391,7 @@ export default function DivisionVertical({
                 display: "flex",
                 alignItems: item.isLine ? "flex-end" : "center",
                 justifyContent: item.isLine ? "flex-start" : "center",
-                height: item.isLine ? CELL_SIZE : CELL_SIZE,
+                height: item.isBracketLine ? BRACKET_LINE_HEIGHT : CELL_SIZE,
               }}
             >
               {item.content}
