@@ -125,6 +125,7 @@ export default function DivisionVertical({
   // Bracket area padding
   const bracketPaddingLeft = 8;
   const BRACKET_LINE_HEIGHT = 6;
+const LINE_CELL_HEIGHT = 8;
 
   // Grid column numbers: col 1 = symbol, col 2..(1+totalDigitCols) = digits
   // Dividend digit at index i maps to grid column 2+i
@@ -389,9 +390,9 @@ export default function DivisionVertical({
                   : `${item.col}`,
                 gridRow: `${item.row}`,
                 display: "flex",
-                alignItems: item.isLine ? "flex-end" : "center",
+                alignItems: item.isBracketLine ? "flex-end" : "center",
                 justifyContent: item.isLine ? "flex-start" : "center",
-                height: item.isBracketLine ? BRACKET_LINE_HEIGHT : CELL_SIZE,
+                height: item.isBracketLine ? BRACKET_LINE_HEIGHT : item.isLine ? LINE_CELL_HEIGHT : CELL_SIZE,
               }}
             >
               {item.content}
