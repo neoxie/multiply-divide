@@ -27,6 +27,17 @@ function RangeInput({ label, config, configKey, onChange }: {
   configKey: keyof RangeSettings;
   onChange: (key: keyof RangeSettings, field: "min" | "max", value: number) => void;
 }) {
+  const [minStr, setMinStr] = useState(String(config.min));
+  const [maxStr, setMaxStr] = useState(String(config.max));
+
+  const commit = (field: "min" | "max", str: string) => {
+    const v = parseInt(str);
+    if (!isNaN(v)) onChange(configKey, field, v);
+    // Reset local state to current config value (handles clamp/no-change cases)
+    if (field === "min") setMinStr(String(config.min));
+    else setMaxStr(String(config.max));
+  };
+
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-gray-500 font-medium w-10 text-right">{label}</span>
@@ -34,11 +45,9 @@ function RangeInput({ label, config, configKey, onChange }: {
         type="number"
         min={1}
         max={1000}
-        value={config.min}
-        onChange={(e) => {
-          const v = parseInt(e.target.value);
-          if (!isNaN(v)) onChange(configKey, "min", v);
-        }}
+        value={minStr}
+        onChange={(e) => setMinStr(e.target.value)}
+        onBlur={() => commit("min", minStr)}
         className="w-14 px-1.5 py-1 text-center text-sm border rounded"
         style={{ borderColor: "#d1d5db" }}
       />
@@ -47,11 +56,9 @@ function RangeInput({ label, config, configKey, onChange }: {
         type="number"
         min={1}
         max={1000}
-        value={config.max}
-        onChange={(e) => {
-          const v = parseInt(e.target.value);
-          if (!isNaN(v)) onChange(configKey, "max", v);
-        }}
+        value={maxStr}
+        onChange={(e) => setMaxStr(e.target.value)}
+        onBlur={() => commit("max", maxStr)}
         className="w-14 px-1.5 py-1 text-center text-sm border rounded"
         style={{ borderColor: "#d1d5db" }}
       />
@@ -166,14 +173,14 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 px-5 py-2">
           {(problemType === "multiplication" || problemType === "random") && (
             <div className="flex items-center gap-6">
-              <RangeInput label="乘数A" config={settings.multiplierA} configKey="multiplierA" onChange={updateRange} />
-              <RangeInput label="乘数B" config={settings.multiplierB} configKey="multiplierB" onChange={updateRange} />
+              <RangeInput key={`a-${settings.multiplierA.min}-${settings.multiplierA.max}`} label="乘数A" config={settings.multiplierA} configKey="multiplierA" onChange={updateRange} />
+              <RangeInput key={`b-${settings.multiplierB.min}-${settings.multiplierB.max}`} label="乘数B" config={settings.multiplierB} configKey="multiplierB" onChange={updateRange} />
             </div>
           )}
           {(problemType === "division" || problemType === "random") && (
             <div className="flex items-center gap-6">
-              <RangeInput label="除数" config={settings.divisor} configKey="divisor" onChange={updateRange} />
-              <RangeInput label="商" config={settings.quotient} configKey="quotient" onChange={updateRange} />
+              <RangeInput key={`d-${settings.divisor.min}-${settings.divisor.max}`} label="除数" config={settings.divisor} configKey="divisor" onChange={updateRange} />
+              <RangeInput key={`q-${settings.quotient.min}-${settings.quotient.max}`} label="商" config={settings.quotient} configKey="quotient" onChange={updateRange} />
             </div>
           )}
         </div>
