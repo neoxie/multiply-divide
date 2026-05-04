@@ -41,6 +41,14 @@ function loadSettings(): RangeSettings {
           return DEFAULT_SETTINGS;
         }
       }
+      // Clamp loaded values and fix inverted ranges
+      for (const key of keys) {
+        let r = { min: clamp(parsed[key].min), max: clamp(parsed[key].max) };
+        if (r.min > r.max) {
+          [r.min, r.max] = [r.max, r.min];
+        }
+        parsed[key] = r;
+      }
       return parsed;
     }
   } catch {
