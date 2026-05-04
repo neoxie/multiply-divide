@@ -1,36 +1,27 @@
 "use client";
 
+import { COLORS, LAYOUT } from "./constants";
+import DigitCell from "./DigitCell";
+
+const { symbolColWidth, bracketPaddingLeft, bracketLineHeight, lineCellHeight } = LAYOUT.division;
+const { digitCellSize, cellGap } = LAYOUT;
+
 interface DivisionStep {
   quotientDigit: number;
   portion: number;
   subtractValue: number;
   remainder: number;
   broughtDownDigit?: number;
-  portionEndIndex: number; // exclusive index in dividend digits after portion was formed
+  portionEndIndex: number;
 }
 
-const GREEN_BG = "#A5D6A7";
-const GREEN_TEXT = "#1B5E20";
-const BLUE_BG = "#90CAF9";
-const BLUE_TEXT = "#0D47A1";
-const ORANGE_BG = "#FFCC80";
-const ORANGE_TEXT = "#E65100";
-const RED_BG = "#EF9A9A";
-const RED_TEXT = "#B71C1C";
-const SYMBOL_COLOR = "#C62828";
-const LINE_COLOR = "#555555";
-
-const CELL_SIZE = 36;
-const SYMBOL_COL_WIDTH = 20;
-const CELL_GAP = 2;
-
 function computeDivisionSteps(
-  dividend: number,
+  dividendStr: string,
   divisor: number,
-  quotient: number
+  quotientStr: string
 ): DivisionStep[] {
-  const quotientDigits = String(quotient).split("");
-  const dividendDigits = String(dividend).split("");
+  const quotientDigits = quotientStr.split("");
+  const dividendDigits = dividendStr.split("");
   const steps: DivisionStep[] = [];
 
   let currentPortion = 0;
@@ -66,35 +57,21 @@ function computeDivisionSteps(
   return steps;
 }
 
-function DigitCell({
-  digit,
-  bgColor,
-  textColor,
-}: {
-  digit: string | number;
-  bgColor: string;
-  textColor: string;
-}) {
+function computeLineWidth(startCol: number, endCol: number): number {
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: CELL_SIZE,
-        height: CELL_SIZE,
-        borderRadius: 6,
-        backgroundColor: bgColor,
-        color: textColor,
-        fontWeight: 700,
-        fontSize: 20,
-        lineHeight: 1,
-      }}
-    >
-      {digit}
-    </span>
+    (startCol === 1 ? symbolColWidth : digitCellSize) +
+    (endCol - startCol) * (digitCellSize + cellGap)
   );
 }
+
+type GridItem = {
+  col: number;
+  row: number;
+  span?: number;
+  content: React.ReactNode;
+  isLine?: boolean;
+  isBracketLine?: boolean;
+};
 
 export default function DivisionVertical({
   dividend,
@@ -112,33 +89,14 @@ export default function DivisionVertical({
   const divisorDigits = divisorStr.split("");
   const quotientDigits = quotientStr.split("");
 
-  const steps = computeDivisionSteps(dividend, divisor, quotient);
+  const steps = computeDivisionSteps(dividendStr, divisor, quotientStr);
 
   const totalDigitCols = dividendDigits.length;
 
-  // Grid columns: [sym 20px] [d1 36px] [d2 36px] ... [dN 36px]
   const gridTemplateCols = [
-    `${SYMBOL_COL_WIDTH}px`,
-    ...Array(totalDigitCols).fill(`${CELL_SIZE}px`),
+    `${symbolColWidth}px`,
+    ...Array(totalDigitCols).fill(`${digitCellSize}px`),
   ].join(" ");
-
-  // Bracket area padding
-  const bracketPaddingLeft = 8;
-  const BRACKET_LINE_HEIGHT = 6;
-const LINE_CELL_HEIGHT = 8;
-
-  // Grid column numbers: col 1 = symbol, col 2..(1+totalDigitCols) = digits
-  // Dividend digit at index i maps to grid column 2+i
-  // The rightmost column of the portion for step si is at column 2 + portionEndIndex - 1
-
-  type GridItem = {
-    col: number;
-    row: number;
-    span?: number;
-    content: React.ReactNode;
-    isLine?: boolean;
-    isBracketLine?: boolean;
-  };
 
   const items: GridItem[] = [];
 
@@ -149,18 +107,13 @@ const LINE_CELL_HEIGHT = 8;
       col: quotientStartCol + i,
       row: 1,
       content: (
-        <DigitCell digit={d} bgColor={RED_BG} textColor={RED_TEXT} />
+        <DigitCell char={d} bgColor={COLORS.red.bg} textColor={COLORS.red.text} />
       ),
     });
   });
 
   // Row 2: Bracket line spanning all digit columns
   const bracketLineSpan = 1 + totalDigitCols;
-  let bracketLineWidth = 0;
-  for (let c = 1; c <= 1 + totalDigitCols; c++) {
-    bracketLineWidth += c === 1 ? SYMBOL_COL_WIDTH : CELL_SIZE;
-    if (c > 1) bracketLineWidth += CELL_GAP;
-  }
   items.push({
     col: 1,
     row: 2,
@@ -170,21 +123,21 @@ const LINE_CELL_HEIGHT = 8;
     content: (
       <div
         style={{
-          width: bracketLineWidth,
+          width: computeLineWidth(1, 1 + totalDigitCols),
           height: 2,
-          backgroundColor: LINE_COLOR,
+          backgroundColor: COLORS.line,
         }}
       />
     ),
   });
 
-  // Row 3: Dividend digits in columns 2..(1+totalDigitCols)
+  // Row 3: Dividend digits
   dividendDigits.forEach((d, i) => {
     items.push({
       col: 2 + i,
       row: 3,
       content: (
-        <DigitCell digit={d} bgColor={GREEN_BG} textColor={GREEN_TEXT} />
+        <DigitCell char={d} bgColor={COLORS.green.bg} textColor={COLORS.green.text} />
       ),
     });
   });
@@ -195,27 +148,18 @@ const LINE_CELL_HEIGHT = 8;
     const step = steps[si];
     const subtractStr = String(step.subtractValue);
 
-    // The portion for this step occupies dividend digit indices 0..portionEndIndex-1
-    // (not exactly, but the right edge of the portion is at digit index portionEndIndex-1)
-    // The subtract value is right-aligned with the portion's right edge.
-    // portionRightCol = 2 + step.portionEndIndex - 1
     const portionRightCol = 2 + step.portionEndIndex - 1;
-
-    // Subtract value right edge = portionRightCol
-    // Subtract value left edge = portionRightCol - subtractStr.length + 1
     const subtractStartCol = portionRightCol - subtractStr.length + 1;
-
-    // Minus sign goes one column before subtract value's left edge
     const minusCol = subtractStartCol - 1;
 
-    // Subtract row: minus sign + subtract digits
+    // Subtract row
     items.push({
       col: minusCol,
       row: currentGridRow,
       content: (
         <span
           style={{
-            color: SYMBOL_COLOR,
+            color: COLORS.symbol,
             fontWeight: 700,
             fontSize: 20,
           }}
@@ -231,9 +175,9 @@ const LINE_CELL_HEIGHT = 8;
         row: currentGridRow,
         content: (
           <DigitCell
-            digit={d}
-            bgColor={ORANGE_BG}
-            textColor={ORANGE_TEXT}
+            char={d}
+            bgColor={COLORS.orange.bg}
+            textColor={COLORS.orange.text}
           />
         ),
       });
@@ -241,16 +185,9 @@ const LINE_CELL_HEIGHT = 8;
 
     currentGridRow++;
 
-    // Line row: spans from minusCol to the rightmost column of the subtract value
+    // Line row
     const lineEndCol = portionRightCol;
     const lineSpan = lineEndCol - minusCol + 1;
-
-    // Compute pixel width of the line
-    let lineWidth = 0;
-    for (let c = minusCol; c <= lineEndCol; c++) {
-      lineWidth += c === 1 ? SYMBOL_COL_WIDTH : CELL_SIZE;
-      if (c > minusCol) lineWidth += CELL_GAP;
-    }
 
     items.push({
       col: minusCol,
@@ -260,9 +197,9 @@ const LINE_CELL_HEIGHT = 8;
       content: (
         <div
           style={{
-            width: lineWidth,
+            width: computeLineWidth(minusCol, lineEndCol),
             height: 2,
-            backgroundColor: LINE_COLOR,
+            backgroundColor: COLORS.line,
           }}
         />
       ),
@@ -273,15 +210,7 @@ const LINE_CELL_HEIGHT = 8;
     // Remainder + brought-down row
     if (si < steps.length - 1 && step.broughtDownDigit !== undefined) {
       const remainderStr = String(step.remainder);
-      const broughtDownDigit = step.broughtDownDigit;
-
-      // The brought-down digit is at dividend index = step.portionEndIndex
-      // Grid column for brought-down digit = 2 + step.portionEndIndex
       const broughtDownCol = 2 + step.portionEndIndex;
-
-      // Remainder digits go right before the brought-down digit
-      // Remainder right edge = broughtDownCol - 1
-      // Remainder left edge = broughtDownCol - remainderStr.length
       const remainderStartCol = broughtDownCol - remainderStr.length;
 
       remainderStr.split("").forEach((d, i) => {
@@ -290,32 +219,28 @@ const LINE_CELL_HEIGHT = 8;
           row: currentGridRow,
           content: (
             <DigitCell
-              digit={d}
-              bgColor={ORANGE_BG}
-              textColor={ORANGE_TEXT}
+              char={d}
+              bgColor={COLORS.orange.bg}
+              textColor={COLORS.orange.text}
             />
           ),
         });
       });
 
-      // Brought-down digit is GREEN
       items.push({
         col: broughtDownCol,
         row: currentGridRow,
         content: (
           <DigitCell
-            digit={broughtDownDigit}
-            bgColor={GREEN_BG}
-            textColor={GREEN_TEXT}
+            char={step.broughtDownDigit!}
+            bgColor={COLORS.green.bg}
+            textColor={COLORS.green.text}
           />
         ),
       });
     } else {
-      // Final remainder
       const remainderStr = String(step.remainder);
-      // Right-aligned with the dividend (rightmost digit column)
-      const remainderStartCol =
-        2 + totalDigitCols - remainderStr.length;
+      const remainderStartCol = 2 + totalDigitCols - remainderStr.length;
 
       remainderStr.split("").forEach((d, i) => {
         items.push({
@@ -323,9 +248,9 @@ const LINE_CELL_HEIGHT = 8;
           row: currentGridRow,
           content: (
             <DigitCell
-              digit={d}
-              bgColor={GREEN_BG}
-              textColor={GREEN_TEXT}
+              char={d}
+              bgColor={COLORS.green.bg}
+              textColor={COLORS.green.text}
             />
           ),
         });
@@ -344,40 +269,37 @@ const LINE_CELL_HEIGHT = 8;
         padding: 20,
       }}
     >
-      {/* Divisor - aligned with dividend row (row 3) */}
       <div
         style={{
           display: "flex",
-          gap: CELL_GAP,
+          gap: cellGap,
           alignItems: "center",
-          height: CELL_SIZE,
+          height: digitCellSize,
           paddingRight: 4,
-          marginTop: CELL_SIZE + CELL_GAP + BRACKET_LINE_HEIGHT + CELL_GAP,
+          marginTop: digitCellSize + cellGap + bracketLineHeight + cellGap,
         }}
       >
         {divisorDigits.map((d, i) => (
           <DigitCell
             key={i}
-            digit={d}
-            bgColor={BLUE_BG}
-            textColor={BLUE_TEXT}
+            char={d}
+            bgColor={COLORS.blue.bg}
+            textColor={COLORS.blue.text}
           />
         ))}
       </div>
 
-      {/* Bracket area - borderLeft spans quotient + grid */}
       <div
         style={{
-          borderLeft: `2px solid ${LINE_COLOR}`,
+          borderLeft: `2px solid ${COLORS.line}`,
           paddingLeft: bracketPaddingLeft,
         }}
       >
-        {/* Grid: row 0 = quotient, row 1 = bracket line, row 2 = dividend, ... */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: gridTemplateCols,
-            columnGap: CELL_GAP,
+            columnGap: cellGap,
             rowGap: 2,
           }}
         >
@@ -392,7 +314,7 @@ const LINE_CELL_HEIGHT = 8;
                 display: "flex",
                 alignItems: item.isBracketLine ? "flex-end" : "center",
                 justifyContent: item.isLine ? "flex-start" : "center",
-                height: item.isBracketLine ? BRACKET_LINE_HEIGHT : item.isLine ? LINE_CELL_HEIGHT : CELL_SIZE,
+                height: item.isBracketLine ? bracketLineHeight : item.isLine ? lineCellHeight : digitCellSize,
               }}
             >
               {item.content}

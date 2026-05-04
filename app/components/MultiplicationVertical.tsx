@@ -1,19 +1,9 @@
 'use client';
 
-const GREEN_BG = "#A5D6A7";
-const GREEN_TEXT = "#1B5E20";
-const BLUE_BG = "#90CAF9";
-const BLUE_TEXT = "#0D47A1";
-const ORANGE_BG = "#FFCC80";
-const ORANGE_TEXT = "#E65100";
-const RED_BG = "#EF9A9A";
-const RED_TEXT = "#B71C1C";
-const SYMBOL_COLOR = "#C62828";
-const LINE_COLOR = "#555555";
+import { COLORS, LAYOUT } from "./constants";
+import DigitCell from "./DigitCell";
 
-const SYMBOL_COL_WIDTH = 24;
-const DIGIT_COL_WIDTH = 36;
-const ROW_GAP = 4;
+const { symbolColWidth, rowGap, rowHeight } = LAYOUT.multiplication;
 
 function computePartialProducts(
   a: number,
@@ -29,72 +19,19 @@ function computePartialProducts(
   return products;
 }
 
-interface CellProps {
-  char: string;
-  bgColor?: string;
-  textColor?: string;
-  isLarger?: boolean;
-}
-
-function DigitCell({ char, bgColor, textColor, isLarger }: CellProps) {
-  if (char === " " || char === "") {
-    return <div style={{ width: DIGIT_COL_WIDTH, height: 40 }} />;
-  }
-
-  if (!bgColor || !textColor) {
-    return (
-      <div
-        style={{
-          width: DIGIT_COL_WIDTH,
-          height: 40,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: isLarger ? 20 : 18,
-          fontWeight: 700,
-          fontFamily: "monospace",
-          color: textColor || SYMBOL_COLOR,
-        }}
-      >
-        {char}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      style={{
-        width: DIGIT_COL_WIDTH,
-        height: 40,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: isLarger ? 20 : 18,
-        fontWeight: 700,
-        fontFamily: "monospace",
-        backgroundColor: bgColor,
-        color: textColor,
-        borderRadius: 6,
-      }}
-    >
-      {char}
-    </div>
-  );
-}
-
 function SymbolCell({ char, color, width }: { char: string; color?: string; width?: number }) {
   return (
     <div
       style={{
-        width: width || SYMBOL_COL_WIDTH,
-        height: 40,
+        width: width || symbolColWidth,
+        height: rowHeight,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: 18,
         fontWeight: 700,
         fontFamily: "monospace",
-        color: color || SYMBOL_COLOR,
+        color: color || COLORS.symbol,
       }}
     >
       {char}
@@ -103,16 +40,79 @@ function SymbolCell({ char, color, width }: { char: string; color?: string; widt
 }
 
 function LineRow({ numCols }: { numCols: number }) {
-  const totalWidth = SYMBOL_COL_WIDTH + numCols * DIGIT_COL_WIDTH;
+  const totalWidth = symbolColWidth + numCols * LAYOUT.digitCellSize;
   return (
     <div
       style={{
         width: totalWidth,
         height: 2,
-        backgroundColor: LINE_COLOR,
+        backgroundColor: COLORS.line,
         margin: "2px 0",
       }}
     />
+  );
+}
+
+type Row =
+  | { type: "digits"; symbol: string; digits: string[]; bgColor: string; textColor: string; isLarger?: boolean; symbolColor?: string }
+  | { type: "line" };
+
+// The × and + symbols replace the space immediately before the first digit,
+// rather than sitting in the dedicated symbol column — standard vertical format.
+function renderDigitRow(
+  row: Row & { type: "digits" },
+  rowKey: string
+): React.ReactNode {
+  const { symbol, digits, bgColor, textColor, isLarger, symbolColor } = row;
+  const firstDigitIdx = digits.findIndex((d) => d !== " ");
+  const hasInlineSymbol = firstDigitIdx > 0 && (symbol === "×" || symbol === "+");
+
+  const cells: React.ReactNode[] = [];
+
+  cells.push(
+    <SymbolCell key="sym" char=" " color={symbolColor} />
+  );
+
+  digits.forEach((digit, colIdx) => {
+    if (hasInlineSymbol && colIdx === firstDigitIdx - 1) {
+      cells.push(
+        <SymbolCell
+          key={`d${colIdx}`}
+          char={symbol}
+          color={symbolColor}
+          width={LAYOUT.digitCellSize}
+        />
+      );
+    } else if (digit !== " ") {
+      cells.push(
+        <DigitCell
+          key={`d${colIdx}`}
+          char={digit}
+          bgColor={bgColor}
+          textColor={textColor}
+          size={LAYOUT.digitCellSize}
+          fontSize={isLarger ? 20 : 18}
+        />
+      );
+    } else {
+      cells.push(
+        <DigitCell key={`d${colIdx}`} char=" " />
+      );
+    }
+  });
+
+  return (
+    <div
+      key={rowKey}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 2,
+        alignItems: "center",
+      }}
+    >
+      {cells}
+    </div>
   );
 }
 
@@ -130,189 +130,71 @@ export default function MultiplicationVertical({
 
   const partials = computePartialProducts(a, b);
 
-  // Calculate display strings for partial products (with trailing zeros)
   const partialDisplayStrings = partials.map((p) => {
     const valStr = String(p.value);
     return valStr + "0".repeat(p.placeOffset);
   });
 
-  // Determine number of digit columns:
-  // max of (multiplicand digits, multiplier digits, each partial product digits, product digits)
-  // Then +1 for symbol column is handled separately
-  const maxDigitCols = Math.max(
+  const numDigitCols = Math.max(
     multiplicandStr.length,
     multiplierStr.length,
     ...partialDisplayStrings.map((s) => s.length),
     productStr.length
   );
 
-  const numDigitCols = maxDigitCols;
-
-  // Helper: right-align digits into numDigitCols columns
-  // Returns array of length numDigitCols, with spaces for empty positions
   function rightAlignDigits(str: string): string[] {
-    const padded = str.padStart(numDigitCols, " ");
-    return padded.split("");
+    return str.padStart(numDigitCols, " ").split("");
   }
-
-  // Build rows
-  type Row =
-    | { type: "digits"; symbol: string; digits: string[]; bgColor: string; textColor: string; isLarger?: boolean; symbolColor?: string }
-    | { type: "line" };
 
   const rows: Row[] = [];
 
-  // Row 1: multiplicand (green)
   rows.push({
     type: "digits",
     symbol: " ",
     digits: rightAlignDigits(multiplicandStr),
-    bgColor: GREEN_BG,
-    textColor: GREEN_TEXT,
+    bgColor: COLORS.green.bg,
+    textColor: COLORS.green.text,
   });
 
-  // Row 2: multiplier (blue) with × symbol
-  const multiplierDigits = rightAlignDigits(multiplierStr);
   rows.push({
     type: "digits",
     symbol: "×",
-    digits: multiplierDigits,
-    bgColor: BLUE_BG,
-    textColor: BLUE_TEXT,
-    symbolColor: SYMBOL_COLOR,
+    digits: rightAlignDigits(multiplierStr),
+    bgColor: COLORS.blue.bg,
+    textColor: COLORS.blue.text,
+    symbolColor: COLORS.symbol,
   });
 
-  // Line
   rows.push({ type: "line" });
 
-  // Partial product rows (orange)
   partialDisplayStrings.forEach((partialStr, idx) => {
-    const partialDigits = rightAlignDigits(partialStr);
     rows.push({
       type: "digits",
       symbol: idx === 0 ? " " : "+",
-      digits: partialDigits,
-      bgColor: ORANGE_BG,
-      textColor: ORANGE_TEXT,
-      symbolColor: idx === 0 ? undefined : SYMBOL_COLOR,
+      digits: rightAlignDigits(partialStr),
+      bgColor: COLORS.orange.bg,
+      textColor: COLORS.orange.text,
+      symbolColor: idx === 0 ? undefined : COLORS.symbol,
     });
   });
 
-  // Line
   rows.push({ type: "line" });
 
-  // Row: product (red, slightly larger)
   rows.push({
     type: "digits",
     symbol: " ",
     digits: rightAlignDigits(productStr),
-    bgColor: RED_BG,
-    textColor: RED_TEXT,
+    bgColor: COLORS.red.bg,
+    textColor: COLORS.red.text,
     isLarger: true,
   });
-
-  // Render
-  // For the multiplier row, we need special handling of × placement:
-  // The × symbol should be in the column immediately before the first digit
-  // For partial product rows with +, the + should be immediately before the first digit
-
-  function renderDigitRow(
-    row: Row & { type: "digits" }
-  ): React.ReactNode {
-    if (row.type !== "digits") return null;
-
-    const { symbol, digits, bgColor, textColor, isLarger, symbolColor } = row;
-
-    // Find where the first actual digit is
-    const firstDigitIdx = digits.findIndex((d) => d !== " ");
-
-    // Build cells for the digit columns
-    // We need to figure out where to place the symbol
-    // The symbol should go immediately before the first digit
-    // If the first digit is at index 0, the symbol goes in the symbol column
-    // If the first digit is at index > 0, the symbol replaces the space at firstDigitIdx - 1
-
-    const cells: React.ReactNode[] = [];
-
-    // Symbol column
-    // If the first digit is at index 0, the symbol goes in the dedicated symbol column
-    // Otherwise, if there's a symbol (× or +), it replaces the space before the first digit
-    if (firstDigitIdx === 0) {
-      // Symbol goes in the dedicated symbol column
-      cells.push(
-        <div key="sym" style={{ display: "flex" }}>
-          <SymbolCell char={symbol} color={symbolColor} />
-        </div>
-      );
-    } else if (symbol === "×" || symbol === "+") {
-      // Symbol replaces the space immediately before the first digit
-      // The dedicated symbol column is empty
-      cells.push(
-        <div key="sym" style={{ display: "flex" }}>
-          <SymbolCell char=" " />
-        </div>
-      );
-    } else {
-      cells.push(
-        <div key="sym" style={{ display: "flex" }}>
-          <SymbolCell char=" " />
-        </div>
-      );
-    }
-
-    // Digit columns
-    digits.forEach((digit, colIdx) => {
-      // Check if this position should show the symbol instead
-      if (
-        (symbol === "×" || symbol === "+") &&
-        colIdx === firstDigitIdx - 1 &&
-        firstDigitIdx > 0
-      ) {
-        cells.push(
-          <div key={`d${colIdx}`} style={{ display: "flex" }}>
-            <SymbolCell char={symbol} color={symbolColor} width={DIGIT_COL_WIDTH} />
-          </div>
-        );
-      } else if (digit !== " ") {
-        cells.push(
-          <div key={`d${colIdx}`} style={{ display: "flex" }}>
-            <DigitCell
-              char={digit}
-              bgColor={bgColor}
-              textColor={textColor}
-              isLarger={isLarger}
-            />
-          </div>
-        );
-      } else {
-        cells.push(
-          <div key={`d${colIdx}`} style={{ display: "flex" }}>
-            <DigitCell char=" " />
-          </div>
-        );
-      }
-    });
-
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: 2,
-          alignItems: "center",
-        }}
-      >
-        {cells}
-      </div>
-    );
-  }
 
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: ROW_GAP,
+        gap: rowGap,
         alignItems: "flex-start",
         padding: 16,
       }}
@@ -321,11 +203,7 @@ export default function MultiplicationVertical({
         if (row.type === "line") {
           return <LineRow key={`line-${idx}`} numCols={numDigitCols} />;
         }
-        return (
-          <div key={`row-${idx}`}>
-            {renderDigitRow(row as Row & { type: "digits" })}
-          </div>
-        );
+        return renderDigitRow(row as Row & { type: "digits" }, `row-${idx}`);
       })}
     </div>
   );

@@ -6,6 +6,12 @@ import DivisionVertical from "./components/DivisionVertical";
 
 type ProblemType = "multiplication" | "division" | "random";
 
+const PROBLEM_TYPE_OPTIONS: { key: ProblemType; label: string }[] = [
+  { key: "multiplication", label: "乘法" },
+  { key: "division", label: "除法" },
+  { key: "random", label: "随机" },
+];
+
 type Problem =
   | { type: "multiplication"; a: number; b: number }
   | { type: "division"; dividend: number; divisor: number; quotient: number };
@@ -66,11 +72,7 @@ export default function Home() {
             className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl"
             style={{ background: "#e0e0ea" }}
           >
-            {([
-              { key: "multiplication" as ProblemType, label: "乘法" },
-              { key: "division" as ProblemType, label: "除法" },
-              { key: "random" as ProblemType, label: "随机" },
-            ]).map(({ key, label }) => (
+            {PROBLEM_TYPE_OPTIONS.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setProblemType(key)}
