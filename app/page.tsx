@@ -3,6 +3,7 @@
 import { useState } from "react";
 import MultiplicationVertical from "./components/MultiplicationVertical";
 import DivisionVertical from "./components/DivisionVertical";
+import { RangeSettings, useSettings } from "./hooks/useSettings";
 
 type ProblemType = "multiplication" | "division" | "random";
 
@@ -16,18 +17,22 @@ type Problem =
   | { type: "multiplication"; a: number; b: number }
   | { type: "division"; dividend: number; divisor: number; quotient: number };
 
-function generateProblem(problemType: ProblemType): Problem {
+function randInRange({ min, max }: { min: number; max: number }): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateProblem(problemType: ProblemType, settings: RangeSettings): Problem {
   const isMultiplication =
     problemType === "multiplication" ||
     (problemType === "random" && Math.random() < 0.5);
 
   if (isMultiplication) {
-    const a = Math.floor(Math.random() * 100) + 1;
-    const b = Math.floor(Math.random() * 100) + 1;
+    const a = randInRange(settings.multiplierA);
+    const b = randInRange(settings.multiplierB);
     return { type: "multiplication", a, b };
   } else {
-    const divisor = Math.floor(Math.random() * 100) + 1;
-    const quotient = Math.floor(Math.random() * 100) + 1;
+    const divisor = randInRange(settings.divisor);
+    const quotient = randInRange(settings.quotient);
     const dividend = divisor * quotient;
     return { type: "division", dividend, divisor, quotient };
   }
@@ -38,8 +43,10 @@ export default function Home() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
 
+  const { settings, updateRange } = useSettings();
+
   const handleGenerate = () => {
-    setProblem(generateProblem(problemType));
+    setProblem(generateProblem(problemType, settings));
     setShowAnswer(false);
   };
 
@@ -52,6 +59,41 @@ export default function Home() {
       ? problem.a * problem.b
       : problem.quotient
     : null;
+
+  const RangeInput = ({ label, config, configKey }: {
+    label: string;
+    config: { min: number; max: number };
+    configKey: keyof RangeSettings;
+  }) => (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-gray-500 font-medium w-10 text-right">{label}</span>
+      <input
+        type="number"
+        min={1}
+        max={1000}
+        value={config.min}
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          if (!isNaN(v)) updateRange(configKey, "min", v);
+        }}
+        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
+        style={{ borderColor: "#d1d5db" }}
+      />
+      <span className="text-xs text-gray-400">-</span>
+      <input
+        type="number"
+        min={1}
+        max={1000}
+        value={config.max}
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          if (!isNaN(v)) updateRange(configKey, "max", v);
+        }}
+        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
+        style={{ borderColor: "#d1d5db" }}
+      />
+    </div>
+  );
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -115,6 +157,22 @@ export default function Home() {
               解答
             </button>
           </div>
+        </div>
+
+        {/* 设置面板 */}
+        <div className="flex flex-col items-center gap-2 px-5 py-2">
+          {(problemType === "multiplication" || problemType === "random") && (
+            <div className="flex items-center gap-6">
+              <RangeInput label="乘数A" config={settings.multiplierA} configKey="multiplierA" />
+              <RangeInput label="乘数B" config={settings.multiplierB} configKey="multiplierB" />
+            </div>
+          )}
+          {(problemType === "division" || problemType === "random") && (
+            <div className="flex items-center gap-6">
+              <RangeInput label="除数" config={settings.divisor} configKey="divisor" />
+              <RangeInput label="商" config={settings.quotient} configKey="quotient" />
+            </div>
+          )}
         </div>
 
         {/* 题目行 */}
