@@ -21,6 +21,44 @@ function randInRange({ min, max }: { min: number; max: number }): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function RangeInput({ label, config, configKey, onChange }: {
+  label: string;
+  config: { min: number; max: number };
+  configKey: keyof RangeSettings;
+  onChange: (key: keyof RangeSettings, field: "min" | "max", value: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-gray-500 font-medium w-10 text-right">{label}</span>
+      <input
+        type="number"
+        min={1}
+        max={1000}
+        value={config.min}
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          if (!isNaN(v)) onChange(configKey, "min", v);
+        }}
+        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
+        style={{ borderColor: "#d1d5db" }}
+      />
+      <span className="text-xs text-gray-400">-</span>
+      <input
+        type="number"
+        min={1}
+        max={1000}
+        value={config.max}
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          if (!isNaN(v)) onChange(configKey, "max", v);
+        }}
+        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
+        style={{ borderColor: "#d1d5db" }}
+      />
+    </div>
+  );
+}
+
 function generateProblem(problemType: ProblemType, settings: RangeSettings): Problem {
   const isMultiplication =
     problemType === "multiplication" ||
@@ -59,41 +97,6 @@ export default function Home() {
       ? problem.a * problem.b
       : problem.quotient
     : null;
-
-  const RangeInput = ({ label, config, configKey }: {
-    label: string;
-    config: { min: number; max: number };
-    configKey: keyof RangeSettings;
-  }) => (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-500 font-medium w-10 text-right">{label}</span>
-      <input
-        type="number"
-        min={1}
-        max={1000}
-        value={config.min}
-        onChange={(e) => {
-          const v = parseInt(e.target.value);
-          if (!isNaN(v)) updateRange(configKey, "min", v);
-        }}
-        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
-        style={{ borderColor: "#d1d5db" }}
-      />
-      <span className="text-xs text-gray-400">-</span>
-      <input
-        type="number"
-        min={1}
-        max={1000}
-        value={config.max}
-        onChange={(e) => {
-          const v = parseInt(e.target.value);
-          if (!isNaN(v)) updateRange(configKey, "max", v);
-        }}
-        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
-        style={{ borderColor: "#d1d5db" }}
-      />
-    </div>
-  );
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -163,14 +166,14 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 px-5 py-2">
           {(problemType === "multiplication" || problemType === "random") && (
             <div className="flex items-center gap-6">
-              <RangeInput label="乘数A" config={settings.multiplierA} configKey="multiplierA" />
-              <RangeInput label="乘数B" config={settings.multiplierB} configKey="multiplierB" />
+              <RangeInput label="乘数A" config={settings.multiplierA} configKey="multiplierA" onChange={updateRange} />
+              <RangeInput label="乘数B" config={settings.multiplierB} configKey="multiplierB" onChange={updateRange} />
             </div>
           )}
           {(problemType === "division" || problemType === "random") && (
             <div className="flex items-center gap-6">
-              <RangeInput label="除数" config={settings.divisor} configKey="divisor" />
-              <RangeInput label="商" config={settings.quotient} configKey="quotient" />
+              <RangeInput label="除数" config={settings.divisor} configKey="divisor" onChange={updateRange} />
+              <RangeInput label="商" config={settings.quotient} configKey="quotient" onChange={updateRange} />
             </div>
           )}
         </div>

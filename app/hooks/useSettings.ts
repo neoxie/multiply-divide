@@ -43,11 +43,9 @@ function loadSettings(): RangeSettings {
       }
       // Clamp loaded values and fix inverted ranges
       for (const key of keys) {
-        let r = { min: clamp(parsed[key].min), max: clamp(parsed[key].max) };
-        if (r.min > r.max) {
-          [r.min, r.max] = [r.max, r.min];
-        }
-        parsed[key] = r;
+        const mn = clamp(parsed[key].min);
+        const mx = clamp(parsed[key].max);
+        parsed[key] = mn > mx ? { min: mx, max: mn } : { min: mn, max: mx };
       }
       return parsed;
     }
