@@ -147,7 +147,6 @@ export default function MultiplicationVertical({
   );
 
   const numDigitCols = maxDigitCols;
-  const totalGridCols = 1 + numDigitCols; // symbol column + digit columns
 
   // Helper: right-align digits into numDigitCols columns
   // Returns array of length numDigitCols, with spaces for empty positions
@@ -174,12 +173,6 @@ export default function MultiplicationVertical({
 
   // Row 2: multiplier (blue) with × symbol
   const multiplierDigits = rightAlignDigits(multiplierStr);
-  // Find the index of the first non-space digit in the multiplier
-  const firstMultiplierDigitIdx = multiplierDigits.findIndex(
-    (d) => d !== " "
-  );
-  // The × goes right before the first digit of the multiplier
-  // We need a special row where × replaces the space just before the first digit
   rows.push({
     type: "digits",
     symbol: "×",
@@ -195,7 +188,6 @@ export default function MultiplicationVertical({
   // Partial product rows (orange)
   partialDisplayStrings.forEach((partialStr, idx) => {
     const partialDigits = rightAlignDigits(partialStr);
-    const firstDigitIdx = partialDigits.findIndex((d) => d !== " ");
     rows.push({
       type: "digits",
       symbol: idx === 0 ? " " : "+",
