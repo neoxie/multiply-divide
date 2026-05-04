@@ -59,10 +59,13 @@ export default function Home() {
 
       {/* 控制区 */}
       <div style={{ background: "#f5f5fa", borderBottom: "1px solid #e5e7eb" }}>
-        {/* 上行：类型选择 + 题目 */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center lg:gap-8">
-          {/* 类型选择 */}
-          <div className="flex gap-2 px-5 py-3 justify-center">
+        {/* 按钮行：类型选择 + 操作按钮 */}
+        <div className="flex items-center justify-center gap-4 px-5 pt-4">
+          {/* 类型选择组 */}
+          <div
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl"
+            style={{ background: "#e0e0ea" }}
+          >
             {([
               { key: "multiplication" as ProblemType, label: "乘法" },
               { key: "division" as ProblemType, label: "除法" },
@@ -75,7 +78,7 @@ export default function Home() {
                 style={
                   problemType === key
                     ? { background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff", boxShadow: "0 2px 6px rgba(102,126,234,0.4)" }
-                    : { background: "#ddd", color: "#666" }
+                    : { background: "#fff", color: "#666" }
                 }
               >
                 {label}
@@ -83,49 +86,52 @@ export default function Home() {
             ))}
           </div>
 
-          {/* 题目显示 */}
-          <div className="px-5 py-4 text-center text-3xl font-bold text-gray-800">
-            {problem ? (
-              <>
-                {problem.type === "multiplication"
-                  ? `${problem.a} × ${problem.b}`
-                  : `${problem.dividend} ÷ ${problem.divisor}`}
-                {showAnswer && answer !== null && (
-                  <span>
-                    {" "} = <span className="text-red-600">{answer}</span>
-                  </span>
-                )}
-                {!showAnswer && " = ?"}
-              </>
-            ) : (
-              <span className="text-lg text-gray-400">点击「出题」开始练习</span>
-            )}
+          {/* 操作按钮组 */}
+          <div
+            className="flex items-center gap-2 px-2 py-1.5 rounded-xl"
+            style={{ background: "#e0e0ea" }}
+          >
+            <button
+              onClick={handleGenerate}
+              className="px-8 py-2.5 rounded-lg text-white text-sm font-bold border-none cursor-pointer"
+              style={{
+                background: "linear-gradient(135deg, #43A047, #66BB6A)",
+                boxShadow: "0 2px 8px rgba(67,160,71,0.3)",
+              }}
+            >
+              出题
+            </button>
+            <button
+              onClick={handleSolve}
+              disabled={!problem}
+              className="px-8 py-2.5 rounded-lg text-white text-sm font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: "linear-gradient(135deg, #1E88E5, #42A5F5)",
+                boxShadow: problem ? "0 2px 8px rgba(30,136,229,0.3)" : "none",
+              }}
+            >
+              解答
+            </button>
           </div>
         </div>
 
-        {/* 下行：操作按钮（居中） */}
-        <div className="px-5 pb-4 flex gap-4 justify-center">
-          <button
-            onClick={handleGenerate}
-            className="px-8 py-3 rounded-xl text-white text-base font-bold border-none cursor-pointer"
-            style={{
-              background: "linear-gradient(135deg, #43A047, #66BB6A)",
-              boxShadow: "0 2px 8px rgba(67,160,71,0.3)",
-            }}
-          >
-            出题
-          </button>
-          <button
-            onClick={handleSolve}
-            disabled={!problem}
-            className="px-8 py-3 rounded-xl text-white text-base font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: "linear-gradient(135deg, #1E88E5, #42A5F5)",
-              boxShadow: problem ? "0 2px 8px rgba(30,136,229,0.3)" : "none",
-            }}
-          >
-            解答
-          </button>
+        {/* 题目行 */}
+        <div className="px-5 py-4 text-center text-3xl font-bold text-gray-800">
+          {problem ? (
+            <>
+              {problem.type === "multiplication"
+                ? `${problem.a} × ${problem.b}`
+                : `${problem.dividend} ÷ ${problem.divisor}`}
+              {showAnswer && answer !== null && (
+                <span>
+                  {" "} = <span className="text-red-600">{answer}</span>
+                </span>
+              )}
+              {!showAnswer && " = ?"}
+            </>
+          ) : (
+            <span className="text-lg text-gray-400">点击「出题」开始练习</span>
+          )}
         </div>
       </div>
 
