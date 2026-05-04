@@ -48,8 +48,8 @@ function RangeInput({ label, config, configKey, onChange }: {
         value={minStr}
         onChange={(e) => setMinStr(e.target.value)}
         onBlur={() => commit("min", minStr)}
-        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
-        style={{ borderColor: "#d1d5db" }}
+        className="w-[4.5rem] px-1.5 py-1 text-center text-sm border rounded"
+        style={{ borderColor: "#d1d5db", color: "#333" }}
       />
       <span className="text-xs text-gray-400">-</span>
       <input
@@ -59,8 +59,8 @@ function RangeInput({ label, config, configKey, onChange }: {
         value={maxStr}
         onChange={(e) => setMaxStr(e.target.value)}
         onBlur={() => commit("max", maxStr)}
-        className="w-14 px-1.5 py-1 text-center text-sm border rounded"
-        style={{ borderColor: "#d1d5db" }}
+        className="w-[4.5rem] px-1.5 py-1 text-center text-sm border rounded"
+        style={{ borderColor: "#d1d5db", color: "#333" }}
       />
     </div>
   );
