@@ -4,12 +4,18 @@ import { useState } from "react";
 import MultiplicationVertical from "./components/MultiplicationVertical";
 import DivisionVertical from "./components/DivisionVertical";
 
+type ProblemType = "multiplication" | "division" | "random";
+
 type Problem =
   | { type: "multiplication"; a: number; b: number }
   | { type: "division"; dividend: number; divisor: number; quotient: number };
 
-function generateProblem(): Problem {
-  if (Math.random() < 0.5) {
+function generateProblem(problemType: ProblemType): Problem {
+  const isMultiplication =
+    problemType === "multiplication" ||
+    (problemType === "random" && Math.random() < 0.5);
+
+  if (isMultiplication) {
     const a = Math.floor(Math.random() * 100) + 1;
     const b = Math.floor(Math.random() * 100) + 1;
     return { type: "multiplication", a, b };
@@ -22,11 +28,12 @@ function generateProblem(): Problem {
 }
 
 export default function Home() {
+  const [problemType, setProblemType] = useState<ProblemType>("random");
   const [problem, setProblem] = useState<Problem | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
 
   const handleGenerate = () => {
-    setProblem(generateProblem());
+    setProblem(generateProblem(problemType));
     setShowAnswer(false);
   };
 
@@ -48,6 +55,28 @@ export default function Home() {
         style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}
       >
         乘除法竖式练习
+      </div>
+
+      {/* 类型选择 */}
+      <div className="flex gap-2 px-5 py-3" style={{ background: "#f0f0f5" }}>
+        {([
+          { key: "multiplication" as ProblemType, label: "乘法" },
+          { key: "division" as ProblemType, label: "除法" },
+          { key: "random" as ProblemType, label: "随机" },
+        ]).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setProblemType(key)}
+            className="flex-1 py-2 rounded-lg text-sm font-bold border-none cursor-pointer transition-all"
+            style={
+              problemType === key
+                ? { background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff", boxShadow: "0 2px 6px rgba(102,126,234,0.4)" }
+                : { background: "#ddd", color: "#666" }
+            }
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* 题目区 */}
