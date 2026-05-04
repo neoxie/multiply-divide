@@ -142,8 +142,12 @@ export default function MultiplicationVertical({
     productStr.length
   );
 
+  const lastPartialStr = partialDisplayStrings[partialDisplayStrings.length - 1];
+  const needsExtraCol = partialDisplayStrings.length >= 2 && lastPartialStr.length === numDigitCols;
+  const effectiveNumDigitCols = needsExtraCol ? numDigitCols + 1 : numDigitCols;
+
   function rightAlignDigits(str: string): string[] {
-    return str.padStart(numDigitCols, " ").split("");
+    return str.padStart(effectiveNumDigitCols, " ").split("");
   }
 
   const rows: Row[] = [];
@@ -170,11 +174,11 @@ export default function MultiplicationVertical({
   partialDisplayStrings.forEach((partialStr, idx) => {
     rows.push({
       type: "digits",
-      symbol: idx === 0 ? " " : "+",
+      symbol: idx === partialDisplayStrings.length - 1 ? "+" : " ",
       digits: rightAlignDigits(partialStr),
       bgColor: COLORS.orange.bg,
       textColor: COLORS.orange.text,
-      symbolColor: idx === 0 ? undefined : COLORS.symbol,
+      symbolColor: idx === partialDisplayStrings.length - 1 ? COLORS.symbol : undefined,
     });
   });
 
@@ -201,7 +205,7 @@ export default function MultiplicationVertical({
     >
       {rows.map((row, idx) => {
         if (row.type === "line") {
-          return <LineRow key={`line-${idx}`} numCols={numDigitCols} />;
+          return <LineRow key={`line-${idx}`} numCols={effectiveNumDigitCols} />;
         }
         return renderDigitRow(row as Row & { type: "digits" }, `row-${idx}`);
       })}

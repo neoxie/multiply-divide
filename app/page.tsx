@@ -22,12 +22,12 @@ function generateProblem(problemType: ProblemType): Problem {
     (problemType === "random" && Math.random() < 0.5);
 
   if (isMultiplication) {
-    const a = Math.floor(Math.random() * 100) + 1;
-    const b = Math.floor(Math.random() * 100) + 1;
+    const a = Math.floor(Math.random() * 1000) + 1;
+    const b = Math.floor(Math.random() * 1000) + 1;
     return { type: "multiplication", a, b };
   } else {
-    const divisor = Math.floor(Math.random() * 100) + 1;
-    const quotient = Math.floor(Math.random() * 100) + 1;
+    const divisor = Math.floor(Math.random() * 1000) + 1;
+    const quotient = Math.floor(Math.random() * 1000) + 1;
     const dividend = divisor * quotient;
     return { type: "division", dividend, divisor, quotient };
   }

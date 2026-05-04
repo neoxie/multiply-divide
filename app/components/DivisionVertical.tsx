@@ -147,10 +147,12 @@ export default function DivisionVertical({
   for (let si = 0; si < steps.length; si++) {
     const step = steps[si];
     const subtractStr = String(step.subtractValue);
+    const portionStr = String(step.portion);
 
     const portionRightCol = 2 + step.portionEndIndex - 1;
+    const portionStartCol = 2 + step.portionEndIndex - portionStr.length;
     const subtractStartCol = portionRightCol - subtractStr.length + 1;
-    const minusCol = subtractStartCol - 1;
+    const minusCol = portionStartCol - 1;
 
     // Subtract row
     items.push({
@@ -240,6 +242,7 @@ export default function DivisionVertical({
       });
     } else {
       const remainderStr = String(step.remainder);
+      const isLastStep = si === steps.length - 1;
       const remainderStartCol = 2 + totalDigitCols - remainderStr.length;
 
       remainderStr.split("").forEach((d, i) => {
@@ -249,8 +252,8 @@ export default function DivisionVertical({
           content: (
             <DigitCell
               char={d}
-              bgColor={COLORS.green.bg}
-              textColor={COLORS.green.text}
+              bgColor={isLastStep ? COLORS.green.bg : COLORS.orange.bg}
+              textColor={isLastStep ? COLORS.green.text : COLORS.orange.text}
             />
           ),
         });
